@@ -388,9 +388,51 @@ Result
 
 
 
+<br>
+15. Consecutive calls occur when an operator deals with two callers within 10 minutes. Find the longest sequence of consecutive calls – give the name of the operator and the first and last call date in the sequence.
+
+<br>
+<br>
+
+As I was stuck with this question, being only able to solve it halfway, I reached for help to Reddit.
+This question was resolved based on this thread on Reddit: 
+https://www.reddit.com/r/SQL/comments/8w4f6r/sqlzoo_helpdesk_hard_question_15/
 
 
+```sql
+WITH AddDiff AS(
+	SELECT LAG(call_date,1) OVER(ORDER BY call_date) as prev_call, call_date, call_ref, taken_by 
+	       ,MINUTE(TIMEDIFF(LAG(call_date,1) OVER(ORDER BY call_date), call_date)) as diff
+	  FROM Issue i),
+AddFlag AS(
+        SELECT*, CASE WHEN diff <10 THEN 1 ELSE 0 END as Flag
+        FROM addDiff),
+AddFilter AS(
+        SELECT*, call_ref - ROW_NUMBER() OVER(PARTITION BY Flag ORDER BY call_Ref) as grp
+        FROM addflag
+        WHERE flag = 1),
+AddGroup AS(
+SELECT 
+         MIN(prev_call) as first_call, 
+         MIN(call_Ref) as call_Ref,
+         MIN(taken_by) as taken_by,
+         MAX(call_date) as last_call,
+         MAX(call_ref) as last_call_Ref,
+         MIN(call_ref)-1 As start_call_ref, 
+        (MAX(call_ref) - (MIN(call_ref)-1) +1) As calls 
+        
+FROM addfilter
+GROUP BY  grp)
 
+SELECT taken_by, first_call, last_call, calls
+FROM addgroup
+WHERE calls = (SELECT MAX(calls) FROM addgroup)
+```
+
+Result 
+|taken_by	|first_call|	last_call	|calls|
+|------------|---------|----------------|------|
+|AB1	|Mon, 14 Aug 2017 09:06:00 GMT	|Mon, 14 Aug 2017 10:17:00 GMT|	24|
 
 
 
