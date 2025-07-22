@@ -351,10 +351,40 @@ Result
 
 14. Maximal usage. If every caller registered with a customer makes at least one call in one day then that customer has "maximal usage" of the service. List the maximal customers for 2017-08-13.
 
+```sql
+WITH registered AS(
+SELECT Company_name, COUNT(Caller.Caller_id) as registered_callers
+FROM Customer 
+JOIN Caller ON Customer.Company_ref = Caller.Company_ref
+GROUP BY Company_name),
+
+calls AS(
+SELECT Customer.company_name, COUNT(DISTINCT Issue.caller_id) AS caller_count
+FROM Issue
+LEFT JOIN Caller ON Caller.Caller_id = Issue.Caller_id
+JOIN Customer ON Customer.Company_ref = Caller.Company_ref
+WHERE DATE_FORMAT(Call_date,  '%Y-%m-%d') = '2017-08-13'
+GROUP BY Customer.company_name)
+
+SELECT calls.company_name, caller_count, registered_callers
+FROM calls
+JOIN registered ON registered.company_name = calls.company_name
+WHERE caller_count = registered_callers
+```
 
 
+Result
 
-
+|company_name|	caller_count|	registered_callers|
+|------------|---------------|-----------------
+|Askew Inc.	|2	|2|
+|Bai Services	|2|	2|
+|Dasher Services	|3|	3|
+|High and Co.	|5|	5|
+|Lady Retail	|4|	4|
+|Packman Shipping	|3|	3|
+|Pitiable Shipping|2|	2|
+|Whale Shipping	|2	|2|
 
 
 
